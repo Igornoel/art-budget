@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId      Int       @id @default(autoincrement())
+  username    String    @unique
+  email       String    @unique
+  password    String
+  createdDate DateTime  @default(now())
+  
+  // Relationships
+  incomes     Income[]
+  expenses    Expense[]
+  budgets     Budget[]
+  reports     Report[]
+  dashboard   Dashboard?
+  
+  @@map("users")
+}
+
+model Income {
+  incomeId  Int      @id @default(autoincrement())
+  userId    Int
+  source    String
+  amount    Decimal  @db.Decimal(10, 2)
+  date      DateTime
+  category  String?
+  
+  // Relationship to User
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  
+  @@map("incomes")
+}
+
+model Expense {
+  expenseId   Int      @id @default(autoincrement())
+  userId      Int
+  description String
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  category    String?
+  
+  // Relationship to User
+  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  
+  @@map("expenses")
+}
+
+model Budget {
+  budgetId     Int      @id @default(autoincrement())
+  userId       Int
+  category     String
+  plannedAmount Decimal @db.Decimal(10, 2)
+  actualAmount Decimal  @default(0) @db.Decimal(10, 2)
+  period       String   // "weekly", "monthly", "yearly"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relationship to User
+  user         User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  
+  @@map("budgets")
+}
+
+model Report {
+  reportId      Int      @id @default(autoincrement())
+  userId        Int
+  reportType    String   // "income", "expense", "budget", "summary"
+  startDate     DateTime
+  endDate       DateTime
+  generatedDate DateTime @default(now())
+  
+  // Relationship to User
+  user          User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  
+  @@map("reports")
+}
+
+model Dashboard {
+  userId      Int      @id
+  totalIncome Decimal  @default(0) @db.Decimal(10, 2)
+  totalExpense Decimal @default(0) @db.Decimal(10, 2)
+  netBalance  Decimal  @default(0) @db.Decimal(10, 2)
+  updatedAt   DateTime @updatedAt
+  
+  // Relationship to User (1 to 1)
+  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  
+  @@unique([userId])
+  @@map("dashboards")
+}
