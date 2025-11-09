@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
@@ -14,7 +14,7 @@ const incomeSchema = z.object({
 });
 
 // Get all incomes for user
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const incomes = await prisma.income.findMany({
       where: { userId: req.userId! },
@@ -28,7 +28,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
 });
 
 // Get income by ID
-router.get('/:id', authenticate, async (req: AuthRequest, res) => {
+router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const income = await prisma.income.findFirst({
       where: {
@@ -48,7 +48,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res) => {
 });
 
 // Add income
-router.post('/', authenticate, async (req: AuthRequest, res) => {
+router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { source, amount, date, category } = incomeSchema.parse(req.body);
 
@@ -70,12 +70,12 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    res.status(500).json({ error: 'Failed to add income' });
+    res.status(500).json({ error: 'Failed to add income', details: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
 // Update income
-router.put('/:id', authenticate, async (req: AuthRequest, res) => {
+router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { source, amount, date, category } = incomeSchema.partial().parse(req.body);
 
@@ -108,12 +108,12 @@ router.put('/:id', authenticate, async (req: AuthRequest, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    res.status(500).json({ error: 'Failed to update income' });
+    res.status(500).json({ error: 'Failed to update income', details: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
 // Delete income
-router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const existingIncome = await prisma.income.findFirst({
       where: {
@@ -149,8 +149,8 @@ async function updateDashboard(userId: number) {
     where: { userId },
   });
 
-  const totalIncome = incomes.reduce((sum, income) => sum + Number(income.amount), 0);
-  const totalExpense = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const totalIncome = incomes.reduce((sum: number, income) => sum + Number(income.amount), 0);
+  const totalExpense = expenses.reduce((sum: number, expense) => sum + Number(expense.amount), 0);
   const netBalance = totalIncome - totalExpense;
 
   await prisma.dashboard.upsert({

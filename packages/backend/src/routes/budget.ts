@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
@@ -13,7 +13,7 @@ const budgetSchema = z.object({
 });
 
 // Get all budgets for user
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const budgets = await prisma.budget.findMany({
       where: { userId: req.userId! },
@@ -30,7 +30,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
           },
         });
 
-        const actualAmount = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+        const actualAmount = expenses.reduce((sum: number, expense) => sum + Number(expense.amount), 0);
 
         return {
           ...budget,
@@ -46,7 +46,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
 });
 
 // Get budget by ID
-router.get('/:id', authenticate, async (req: AuthRequest, res) => {
+router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const budget = await prisma.budget.findFirst({
       where: {
@@ -67,7 +67,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res) => {
       },
     });
 
-    const actualAmount = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+    const actualAmount = expenses.reduce((sum: number, expense) => sum + Number(expense.amount), 0);
 
     res.json({ ...budget, actualAmount });
   } catch (error) {
@@ -76,7 +76,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res) => {
 });
 
 // Create budget
-router.post('/', authenticate, async (req: AuthRequest, res) => {
+router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { category, plannedAmount, period } = budgetSchema.parse(req.body);
 
@@ -95,12 +95,12 @@ router.post('/', authenticate, async (req: AuthRequest, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    res.status(500).json({ error: 'Failed to create budget' });
+    res.status(500).json({ error: 'Failed to create budget', details: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
 // Update budget
-router.put('/:id', authenticate, async (req: AuthRequest, res) => {
+router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { category, plannedAmount, period } = budgetSchema.partial().parse(req.body);
 
@@ -129,12 +129,12 @@ router.put('/:id', authenticate, async (req: AuthRequest, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    res.status(500).json({ error: 'Failed to update budget' });
+    res.status(500).json({ error: 'Failed to update budget', details: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
 // Delete budget
-router.delete('/:id', authenticate, async (req: AuthRequest, res) => {
+router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const existingBudget = await prisma.budget.findFirst({
       where: {

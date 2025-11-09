@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 
@@ -6,7 +6,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Get dashboard data
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     // Get or create dashboard
     let dashboard = await prisma.dashboard.findUnique({
@@ -99,7 +99,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
 });
 
 // Refresh dashboard (recalculate)
-router.post('/refresh', authenticate, async (req: AuthRequest, res) => {
+router.post('/refresh', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const incomes = await prisma.income.findMany({
       where: { userId: req.userId! },
@@ -109,8 +109,8 @@ router.post('/refresh', authenticate, async (req: AuthRequest, res) => {
       where: { userId: req.userId! },
     });
 
-    const totalIncome = incomes.reduce((sum, income) => sum + Number(income.amount), 0);
-    const totalExpense = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+    const totalIncome = incomes.reduce((sum: number, income) => sum + Number(income.amount), 0);
+    const totalExpense = expenses.reduce((sum: number, expense) => sum + Number(expense.amount), 0);
     const netBalance = totalIncome - totalExpense;
 
     const dashboard = await prisma.dashboard.upsert({

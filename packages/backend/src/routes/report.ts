@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
@@ -15,7 +15,7 @@ const reportSchema = z.object({
 });
 
 // Get all reports for user
-router.get('/', authenticate, async (req: AuthRequest, res) => {
+router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const reports = await prisma.report.findMany({
       where: { userId: req.userId! },
@@ -29,7 +29,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
 });
 
 // Generate report
-router.post('/generate', authenticate, async (req: AuthRequest, res) => {
+router.post('/generate', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { reportType, startDate, endDate } = reportSchema.parse(req.body);
 
@@ -87,12 +87,12 @@ router.post('/generate', authenticate, async (req: AuthRequest, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    res.status(500).json({ error: 'Failed to generate report' });
+    res.status(500).json({ error: 'Failed to generate report', details: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
 // Export to Excel
-router.post('/export/excel', authenticate, async (req: AuthRequest, res) => {
+router.post('/export/excel', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { reportType, startDate, endDate } = reportSchema.parse(req.body);
 
@@ -113,7 +113,7 @@ router.post('/export/excel', authenticate, async (req: AuthRequest, res) => {
       worksheet.addRow(['Income Report']);
       worksheet.addRow(['Source', 'Amount', 'Date', 'Category']);
       incomes.forEach((income) => {
-        worksheet.addRow([income.source, income.amount, income.date, income.category || '']);
+        worksheet.addRow([income.source, income.amount.toNumber(), income.date, income.category || '']);
       });
     }
 
@@ -129,7 +129,7 @@ router.post('/export/excel', authenticate, async (req: AuthRequest, res) => {
       worksheet.addRow(['Expense Report']);
       worksheet.addRow(['Description', 'Amount', 'Date', 'Category']);
       expenses.forEach((expense) => {
-        worksheet.addRow([expense.description, expense.amount, expense.date, expense.category || '']);
+        worksheet.addRow([expense.description, expense.amount.toNumber(), expense.date, expense.category || '']);
       });
     }
 
@@ -142,12 +142,12 @@ router.post('/export/excel', authenticate, async (req: AuthRequest, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    res.status(500).json({ error: 'Failed to export report' });
+    res.status(500).json({ error: 'Failed to export report', details: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
 // Export to PDF
-router.post('/export/pdf', authenticate, async (req: AuthRequest, res) => {
+router.post('/export/pdf', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { reportType, startDate, endDate } = reportSchema.parse(req.body);
 
@@ -175,7 +175,7 @@ router.post('/export/pdf', authenticate, async (req: AuthRequest, res) => {
       doc.moveDown();
       incomes.forEach((income) => {
         doc.fontSize(12).text(
-          `${income.source}: RWF ${income.amount} - ${new Date(income.date).toLocaleDateString()}`
+          `${income.source}: RWF ${income.amount.toNumber()} - ${new Date(income.date).toLocaleDateString()}`
         );
       });
       doc.moveDown();
@@ -193,7 +193,7 @@ router.post('/export/pdf', authenticate, async (req: AuthRequest, res) => {
       doc.moveDown();
       expenses.forEach((expense) => {
         doc.fontSize(12).text(
-          `${expense.description}: RWF ${expense.amount} - ${new Date(expense.date).toLocaleDateString()}`
+          `${expense.description}: RWF ${expense.amount.toNumber()} - ${new Date(expense.date).toLocaleDateString()}`
         );
       });
     }
@@ -204,7 +204,7 @@ router.post('/export/pdf', authenticate, async (req: AuthRequest, res) => {
       return res.status(400).json({ error: error.errors });
     }
     console.error('PDF export error:', error);
-    res.status(500).json({ error: 'Failed to export report' });
+    res.status(500).json({ error: 'Failed to export report', details: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 

@@ -24,7 +24,7 @@ app.use('/api/budget', budgetRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (req: express.Request, res: express.Response) => {
   res.json({ status: 'ok', message: 'ART BUDGET API is running' });
 });
 
