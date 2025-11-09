@@ -1,5 +1,5 @@
 import express, { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Budget, Expense } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 
@@ -22,7 +22,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
 
     // Calculate actual amounts from expenses
     const budgetsWithActual = await Promise.all(
-      budgets.map(async (budget) => {
+      budgets.map(async (budget: Budget) => {
         const expenses = await prisma.expense.findMany({
           where: {
             userId: req.userId!,
@@ -30,7 +30,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
           },
         });
 
-        const actualAmount = expenses.reduce((sum: number, expense) => sum + Number(expense.amount), 0);
+        const actualAmount = expenses.reduce((sum: number, expense: Expense) => sum + Number(expense.amount), 0);
 
         return {
           ...budget,
@@ -67,7 +67,7 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
       },
     });
 
-    const actualAmount = expenses.reduce((sum: number, expense) => sum + Number(expense.amount), 0);
+    const actualAmount = expenses.reduce((sum: number, expense: Expense) => sum + Number(expense.amount), 0);
 
     res.json({ ...budget, actualAmount });
   } catch (error) {

@@ -1,5 +1,5 @@
 import express, { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Income, Expense } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 import ExcelJS from 'exceljs';
@@ -112,7 +112,7 @@ router.post('/export/excel', authenticate, async (req: AuthRequest, res: Respons
 
       worksheet.addRow(['Income Report']);
       worksheet.addRow(['Source', 'Amount', 'Date', 'Category']);
-      incomes.forEach((income) => {
+      incomes.forEach((income: Income) => {
         worksheet.addRow([income.source, income.amount.toNumber(), income.date, income.category || '']);
       });
     }
@@ -128,7 +128,7 @@ router.post('/export/excel', authenticate, async (req: AuthRequest, res: Respons
       worksheet.addRow([]);
       worksheet.addRow(['Expense Report']);
       worksheet.addRow(['Description', 'Amount', 'Date', 'Category']);
-      expenses.forEach((expense) => {
+      expenses.forEach((expense: Expense) => {
         worksheet.addRow([expense.description, expense.amount.toNumber(), expense.date, expense.category || '']);
       });
     }
@@ -173,7 +173,7 @@ router.post('/export/pdf', authenticate, async (req: AuthRequest, res: Response)
 
       doc.fontSize(16).text('Income Report');
       doc.moveDown();
-      incomes.forEach((income) => {
+      incomes.forEach((income: Income) => {
         doc.fontSize(12).text(
           `${income.source}: RWF ${income.amount.toNumber()} - ${new Date(income.date).toLocaleDateString()}`
         );
@@ -191,7 +191,7 @@ router.post('/export/pdf', authenticate, async (req: AuthRequest, res: Response)
 
       doc.fontSize(16).text('Expense Report');
       doc.moveDown();
-      expenses.forEach((expense) => {
+      expenses.forEach((expense: Expense) => {
         doc.fontSize(12).text(
           `${expense.description}: RWF ${expense.amount.toNumber()} - ${new Date(expense.date).toLocaleDateString()}`
         );

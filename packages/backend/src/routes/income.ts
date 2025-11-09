@@ -1,5 +1,5 @@
 import express, { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Income, Expense } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 
@@ -149,8 +149,8 @@ async function updateDashboard(userId: number) {
     where: { userId },
   });
 
-  const totalIncome = incomes.reduce((sum: number, income) => sum + Number(income.amount), 0);
-  const totalExpense = expenses.reduce((sum: number, expense) => sum + Number(expense.amount), 0);
+  const totalIncome = incomes.reduce((sum: number, income: Income) => sum + Number(income.amount), 0);
+  const totalExpense = expenses.reduce((sum: number, expense: Expense) => sum + Number(expense.amount), 0);
   const netBalance = totalIncome - totalExpense;
 
   await prisma.dashboard.upsert({
