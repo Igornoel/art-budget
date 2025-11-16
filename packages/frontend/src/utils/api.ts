@@ -1,8 +1,30 @@
 import axios from 'axios'
 import { notification } from 'antd'
 
+// Detect environment and set base URL
+const getBaseURL = () => {
+  // Check if we're in production
+  // Vite sets import.meta.env.PROD to true in production builds
+  const isProduction = import.meta.env.PROD
+  
+  // Also check hostname as fallback
+  const isProductionHost = 
+    window.location.hostname !== 'localhost' && 
+    window.location.hostname !== '127.0.0.1' &&
+    !window.location.hostname.startsWith('192.168.') &&
+    window.location.hostname !== ''
+  
+  if (isProduction || isProductionHost) {
+    // Production: use Render.com backend
+    return 'https://art-budget.onrender.com/api'
+  }
+  
+  // Development: use Vite proxy (which forwards to localhost:3001)
+  return '/api'
+}
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },
