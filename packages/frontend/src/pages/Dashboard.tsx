@@ -65,7 +65,7 @@ const Dashboard = () => {
 
   if (loading || !dashboardData) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="w-full flex items-center justify-center min-h-[400px]">
         <Spin size="large" />
       </div>
     )
@@ -160,12 +160,12 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <Row gutter={[16, 16]}>
         {/* Total Balance Card */}
-        <Col xs={24} lg={12} xl={8}>
+        <Col xs={24} lg={12} xl={10}>
           <Card
-            className="h-full"
+            className="h-full w-full"
             style={{
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               color: 'white',
@@ -196,8 +196,8 @@ const Dashboard = () => {
         </Col>
 
         {/* Income Card */}
-        <Col xs={24} sm={12} lg={6} xl={4}>
-          <Card>
+        <Col xs={24} sm={12} lg={6} xl={7}>
+          <Card className="w-full">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 bg-teal-100 rounded flex items-center justify-center">
                 <DollarOutlined className="text-teal-600 text-lg" />
@@ -218,8 +218,8 @@ const Dashboard = () => {
         </Col>
 
         {/* Expense Card */}
-        <Col xs={24} sm={12} lg={6} xl={4}>
-          <Card>
+        <Col xs={24} sm={12} lg={6} xl={7}>
+          <Card className="w-full">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-10 h-10 bg-green-100 rounded flex items-center justify-center">
                 <ShoppingOutlined className="text-green-600 text-lg" />
@@ -240,8 +240,9 @@ const Dashboard = () => {
         </Col>
 
         {/* Cash Flow Chart */}
-        <Col xs={24} lg={12}>
+        <Col xs={24} lg={12} xl={24}>
           <Card
+            className="w-full"
             title="Cash Flow"
             extra={
               <Space>
@@ -269,10 +270,11 @@ const Dashboard = () => {
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]} className="w-full">
         {/* Recent Activity */}
         <Col xs={24} lg={16}>
           <Card
+            className="w-full"
             title="Recent Activity"
             extra={
               <Space>
@@ -292,7 +294,7 @@ const Dashboard = () => {
 
         {/* Budget Summary */}
         <Col xs={24} lg={8}>
-          <Card title="Budget Summary">
+          <Card className="w-full" title="Budget Summary">
             <div className="space-y-4">
               {dashboardData.budgets.slice(0, 3).map((budget) => {
                 const percentage = (Number(budget.actualAmount) / Number(budget.plannedAmount)) * 100

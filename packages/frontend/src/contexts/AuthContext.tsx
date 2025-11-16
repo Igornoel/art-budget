@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import api from '../utils/api'
-import { toast } from 'sonner'
+import { notification } from 'antd'
 
 interface User {
   userId: number
@@ -37,8 +37,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(userData))
       setUser(userData)
-      toast.success('Login successful!')
-    } catch (error) {
+      notification.success({
+        message: 'Login Successful',
+        description: 'Welcome back!',
+        placement: 'topRight',
+      })
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Login failed. Please check your credentials.'
+      notification.error({
+        message: 'Login Failed',
+        description: errorMessage,
+        placement: 'topRight',
+      })
       throw error
     }
   }
@@ -50,8 +60,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(userData))
       setUser(userData)
-      toast.success('Registration successful!')
-    } catch (error) {
+      notification.success({
+        message: 'Registration Successful',
+        description: 'Your account has been created successfully!',
+        placement: 'topRight',
+      })
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Registration failed. Please try again.'
+      notification.error({
+        message: 'Registration Failed',
+        description: errorMessage,
+        placement: 'topRight',
+      })
       throw error
     }
   }
@@ -60,7 +80,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     setUser(null)
-    toast.success('Logged out successfully')
+    notification.success({
+      message: 'Logged Out',
+      description: 'You have been logged out successfully.',
+      placement: 'topRight',
+    })
   }
 
   return (
