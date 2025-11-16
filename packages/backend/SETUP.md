@@ -49,7 +49,33 @@ Replace:
    npm run dev
    ```
 
+## Production Deployment
 
+**IMPORTANT**: Before starting the production server, you must run database migrations to create all required tables.
 
+### Option 1: Automatic Migration on Start (Recommended)
+The `start` script now automatically runs migrations before starting the server:
+```bash
+npm run build
+npm start
+```
 
+### Option 2: Manual Migration
+If you prefer to run migrations separately:
+```bash
+npm run build
+npm run prisma:migrate:deploy
+npm run start:no-migrate
+```
+
+### Production Environment Variables
+Make sure your production `.env` file has:
+```env
+DATABASE_URL="mysql://YOUR_USERNAME:YOUR_PASSWORD@YOUR_HOST:3306/YOUR_DATABASE"
+JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
+PORT=3001
+NODE_ENV=production
+```
+
+**Note**: The `prisma migrate deploy` command applies all pending migrations to your production database. This is different from `prisma migrate dev` which is only for development and can create new migrations.
 
