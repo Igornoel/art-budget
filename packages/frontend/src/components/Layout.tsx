@@ -121,10 +121,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           className="border-0"
         />
         <div className="absolute bottom-0 w-full p-4 border-t border-gray-200">
-          <div className="flex items-center justify-between mb-2">
+          {/* <div className="flex items-center justify-between mb-2">
             {!collapsed && <span className="text-sm text-gray-500">Pro Mode</span>}
             <Switch defaultChecked size="small" />
-          </div>
+          </div> */}
           {!collapsed && (
             <div className="text-xs text-gray-400 mt-2">© 2024 ART BUDGET Inc.</div>
           )}
@@ -139,11 +139,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             className="text-lg"
           />
           <Space>
-            <Button type="primary" icon={<PlusOutlined />}>
-              Add
-            </Button>
-            <Button icon={<SendOutlined />}>Send</Button>
-            <Button icon={<ReloadOutlined />}>Request</Button>
             <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} placement="bottomRight">
               <Space className="cursor-pointer">
                 <Avatar icon={<UserOutlined />} />

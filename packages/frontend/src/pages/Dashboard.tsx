@@ -6,7 +6,6 @@ import {
   DollarOutlined,
   ShoppingOutlined,
   PlusOutlined,
-  SendOutlined,
   ReloadOutlined,
 } from '@ant-design/icons'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
@@ -34,6 +33,7 @@ interface DashboardData {
 const Dashboard = () => {
   const [loading, setLoading] = useState(true)
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [chartPeriod, setChartPeriod] = useState<'weekly' | 'daily'>('weekly')
 
   const fetchDashboardData = async () => {
     try {
@@ -63,6 +63,49 @@ const Dashboard = () => {
     }
   }
 
+  // Calculate percentage changes
+  const calculatePercentageChange = (current: number, previous: number): number | null => {
+    if (previous === 0) {
+      // If previous period had no data, return null to show N/A
+      return null
+    }
+    return ((current - previous) / previous) * 100
+  }
+
+  // Get data for a specific period (within the last 30 days we have from backend)
+  const getPeriodData = (daysBack: number, daysRange: number) => {
+    const today = dayjs()
+    const periodEnd = today.subtract(daysBack, 'day')
+    const periodStart = periodEnd.subtract(daysRange, 'day')
+    const periodStartValue = periodStart.valueOf()
+    const periodEndValue = periodEnd.valueOf()
+
+    const incomes = dashboardData?.cashFlowData.incomes.filter((inc) => {
+      const dateValue = dayjs(inc.date).valueOf()
+      return dateValue >= periodStartValue && dateValue <= periodEndValue
+    }) || []
+
+    const expenses = dashboardData?.cashFlowData.expenses.filter((exp) => {
+      const dateValue = dayjs(exp.date).valueOf()
+      return dateValue >= periodStartValue && dateValue <= periodEndValue
+    }) || []
+
+    const totalIncome = incomes.reduce((sum, inc) => sum + Number(inc.amount), 0)
+    const totalExpense = expenses.reduce((sum, exp) => sum + Number(exp.amount), 0)
+    const netBalance = totalIncome - totalExpense
+
+    return { totalIncome, totalExpense, netBalance }
+  }
+
+  // Compare last 15 days (current period) with previous 15 days (15-30 days ago)
+  // This works within the 30-day window we have from the backend
+  const currentPeriod = getPeriodData(0, 15)
+  const previousPeriod = getPeriodData(15, 15)
+
+  const incomeChange = calculatePercentageChange(currentPeriod.totalIncome, previousPeriod.totalIncome)
+  const expenseChange = calculatePercentageChange(currentPeriod.totalExpense, previousPeriod.totalExpense)
+  const balanceChange = calculatePercentageChange(currentPeriod.netBalance, previousPeriod.netBalance)
+
   if (loading || !dashboardData) {
     return (
       <div className="w-full flex items-center justify-center min-h-[400px]">
@@ -71,32 +114,61 @@ const Dashboard = () => {
     )
   }
 
-  // Prepare cash flow chart data (last 30 days, grouped by week)
+  // Prepare cash flow chart data based on selected period
   const cashFlowChartData = []
   const today = dayjs()
-  for (let i = 4; i >= 0; i--) {
-    const weekStart = today.subtract(i * 7, 'day')
-    const weekEnd = weekStart.add(6, 'day')
-    
-    const weekIncome = dashboardData.cashFlowData.incomes
-      .filter((inc) => {
-        const date = dayjs(inc.date)
-        return date.isAfter(weekStart) && date.isBefore(weekEnd.add(1, 'day'))
-      })
-      .reduce((sum, inc) => sum + Number(inc.amount), 0)
 
-    const weekExpense = dashboardData.cashFlowData.expenses
-      .filter((exp) => {
-        const date = dayjs(exp.date)
-        return date.isAfter(weekStart) && date.isBefore(weekEnd.add(1, 'day'))
-      })
-      .reduce((sum, exp) => sum + Number(exp.amount), 0)
+  if (chartPeriod === 'weekly') {
+    // Last 5 weeks
+    for (let i = 4; i >= 0; i--) {
+      const weekStart = today.subtract(i * 7, 'day')
+      const weekEnd = weekStart.add(6, 'day')
+      
+      const weekIncome = dashboardData.cashFlowData.incomes
+        .filter((inc) => {
+          const date = dayjs(inc.date)
+          return date.isAfter(weekStart) && date.isBefore(weekEnd.add(1, 'day'))
+        })
+        .reduce((sum, inc) => sum + Number(inc.amount), 0)
 
-    cashFlowChartData.push({
-      week: weekStart.format('DD MMM'),
-      income: weekIncome,
-      expense: weekExpense,
-    })
+      const weekExpense = dashboardData.cashFlowData.expenses
+        .filter((exp) => {
+          const date = dayjs(exp.date)
+          return date.isAfter(weekStart) && date.isBefore(weekEnd.add(1, 'day'))
+        })
+        .reduce((sum, exp) => sum + Number(exp.amount), 0)
+
+      cashFlowChartData.push({
+        period: weekStart.format('DD MMM'),
+        income: weekIncome,
+        expense: weekExpense,
+      })
+    }
+  } else {
+    // Last 30 days (daily)
+    for (let i = 29; i >= 0; i--) {
+      const day = today.subtract(i, 'day')
+      
+      const dayIncome = dashboardData.cashFlowData.incomes
+        .filter((inc) => {
+          const date = dayjs(inc.date)
+          return date.isSame(day, 'day')
+        })
+        .reduce((sum, inc) => sum + Number(inc.amount), 0)
+
+      const dayExpense = dashboardData.cashFlowData.expenses
+        .filter((exp) => {
+          const date = dayjs(exp.date)
+          return date.isSame(day, 'day')
+        })
+        .reduce((sum, exp) => sum + Number(exp.amount), 0)
+
+      cashFlowChartData.push({
+        period: day.format('DD MMM'),
+        income: dayIncome,
+        expense: dayExpense,
+      })
+    }
   }
 
   // Recent activity table data
@@ -177,20 +249,21 @@ const Dashboard = () => {
                 {formatCurrency(dashboardData.dashboard.netBalance)}
               </div>
               <div className="flex items-center gap-2">
-                <ArrowUpOutlined />
-                <span>15.8%</span>
+                {balanceChange !== null ? (
+                  <>
+                    {balanceChange >= 0 ? (
+                      <ArrowUpOutlined />
+                    ) : (
+                      <ArrowDownOutlined />
+                    )}
+                    <span className={balanceChange >= 0 ? 'text-green-200' : 'text-red-200'}>
+                      {Math.abs(balanceChange).toFixed(1)}%
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-gray-300 text-sm">N/A</span>
+                )}
               </div>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <Button type="primary" icon={<PlusOutlined />} ghost>
-                Add
-              </Button>
-              <Button icon={<SendOutlined />} ghost>
-                Send
-              </Button>
-              <Button icon={<ReloadOutlined />} ghost>
-                Request
-              </Button>
             </div>
           </Card>
         </Col>
@@ -211,8 +284,20 @@ const Dashboard = () => {
               valueStyle={{ fontSize: '24px', fontWeight: 'bold' }}
             />
             <div className="flex items-center gap-1 mt-2">
-              <ArrowUpOutlined className="text-green-500" />
-              <span className="text-green-500">45.0%</span>
+              {incomeChange !== null ? (
+                <>
+                  {incomeChange >= 0 ? (
+                    <ArrowUpOutlined className="text-green-500" />
+                  ) : (
+                    <ArrowDownOutlined className="text-red-500" />
+                  )}
+                  <span className={incomeChange >= 0 ? 'text-green-500' : 'text-red-500'}>
+                    {Math.abs(incomeChange).toFixed(1)}%
+                  </span>
+                </>
+              ) : (
+                <span className="text-gray-400 text-sm">N/A</span>
+              )}
             </div>
           </Card>
         </Col>
@@ -233,8 +318,20 @@ const Dashboard = () => {
               valueStyle={{ fontSize: '24px', fontWeight: 'bold' }}
             />
             <div className="flex items-center gap-1 mt-2">
-              <ArrowDownOutlined className="text-red-500" />
-              <span className="text-red-500">12.5%</span>
+              {expenseChange !== null ? (
+                <>
+                  {expenseChange >= 0 ? (
+                    <ArrowUpOutlined className="text-red-500" />
+                  ) : (
+                    <ArrowDownOutlined className="text-green-500" />
+                  )}
+                  <span className={expenseChange >= 0 ? 'text-red-500' : 'text-green-500'}>
+                    {Math.abs(expenseChange).toFixed(1)}%
+                  </span>
+                </>
+              ) : (
+                <span className="text-gray-400 text-sm">N/A</span>
+              )}
             </div>
           </Card>
         </Col>
@@ -246,8 +343,18 @@ const Dashboard = () => {
             title="Cash Flow"
             extra={
               <Space>
-                <Button size="small">Weekly</Button>
-                <Button size="small" type="primary">
+                <Button 
+                  size="small" 
+                  type={chartPeriod === 'weekly' ? 'primary' : 'default'}
+                  onClick={() => setChartPeriod('weekly')}
+                >
+                  Weekly
+                </Button>
+                <Button 
+                  size="small" 
+                  type={chartPeriod === 'daily' ? 'primary' : 'default'}
+                  onClick={() => setChartPeriod('daily')}
+                >
                   Daily
                 </Button>
                 <Button size="small" icon={<ReloadOutlined />} onClick={refreshDashboard}>
@@ -259,7 +366,12 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={cashFlowChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="week" />
+                <XAxis 
+                  dataKey="period" 
+                  angle={chartPeriod === 'daily' ? -45 : 0}
+                  textAnchor={chartPeriod === 'daily' ? 'end' : 'middle'}
+                  height={chartPeriod === 'daily' ? 80 : 30}
+                />
                 <YAxis />
                 <Tooltip formatter={(value) => `RWF ${Number(value).toLocaleString()}`} />
                 <Bar dataKey="income" fill="#10b981" />
