@@ -122,7 +122,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             {!collapsed && <span className="text-sm text-gray-500">Pro Mode</span>}
             <Switch defaultChecked size="small" />
           </div> */}
-          {!collapsed && (
+          {!collapsed && ( 
             <div className="text-xs text-gray-400 mt-2">© 2024 ART BUDGET Inc.</div>
           )}
         </div>
