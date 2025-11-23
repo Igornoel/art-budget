@@ -1,12 +1,12 @@
 import express, { Response } from 'express';
-import { PrismaClient, Income, Expense } from '@prisma/client';
+import { Income, Expense } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
+import prisma from '../lib/prisma';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 const reportSchema = z.object({
   reportType: z.enum(['income', 'expense', 'budget', 'summary']),
@@ -24,7 +24,11 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
 
     res.json(reports);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch reports' });
+    console.error('Error fetching reports:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch reports',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 

@@ -45,6 +45,16 @@ api.interceptors.response.use(
   async (error) => {
     const isAuthEndpoint = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/register')
     
+    // Log error for debugging
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+      code: error.code,
+    })
+    
     if (error.response?.status === 401) {
       // Don't auto-redirect for login/register endpoints - let them handle the error
       if (!isAuthEndpoint) {
@@ -86,19 +96,33 @@ api.interceptors.response.use(
     } else if (error.response?.data?.error) {
       // Only show notification for non-auth endpoints to avoid duplicate errors
       if (!isAuthEndpoint) {
+        const errorMessage = error.response.data.error
+        const errorDetails = error.response.data.details
         notification.error({
           message: 'Error',
-          description: error.response.data.error,
+          description: errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage,
           placement: 'topRight',
+          duration: 5,
+        })
+      }
+    } else if (error.request) {
+      // Network error - request was made but no response received
+      if (!isAuthEndpoint) {
+        notification.error({
+          message: 'Network Error',
+          description: 'Unable to connect to the server. Please check your connection and ensure the backend is running.',
+          placement: 'topRight',
+          duration: 5,
         })
       }
     } else {
-      // Only show notification for non-auth endpoints
+      // Request setup error
       if (!isAuthEndpoint) {
         notification.error({
-          message: 'Error',
-          description: 'An error occurred',
+          message: 'Request Error',
+          description: error.message || 'An error occurred while setting up the request',
           placement: 'topRight',
+          duration: 5,
         })
       }
     }

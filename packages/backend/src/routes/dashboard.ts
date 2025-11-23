@@ -1,9 +1,9 @@
 import express, { Response } from 'express';
-import { PrismaClient, Income, Expense } from '@prisma/client';
+import { Income, Expense } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import prisma from '../lib/prisma';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // Get dashboard data
 router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
@@ -93,8 +93,11 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Dashboard error:', error);
-    res.status(500).json({ error: 'Failed to fetch dashboard data' });
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch dashboard data',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 

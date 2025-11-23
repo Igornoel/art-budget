@@ -1,10 +1,10 @@
 import express, { Response } from 'express';
-import { PrismaClient, Income, Expense } from '@prisma/client';
+import { Income, Expense } from '@prisma/client';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { z } from 'zod';
+import prisma from '../lib/prisma';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 const expenseSchema = z.object({
   description: z.string().min(1),
@@ -23,7 +23,11 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
 
     res.json(expenses);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch expenses' });
+    console.error('Error fetching expenses:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch expenses',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
@@ -43,7 +47,11 @@ router.get('/:id', authenticate, async (req: AuthRequest, res: Response) => {
 
     res.json(expense);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch expense' });
+    console.error('Error fetching expense:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch expense',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
