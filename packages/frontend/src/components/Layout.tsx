@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, Space, Switch } from 'antd'
+import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, Space } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   DashboardOutlined,
@@ -13,9 +13,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SettingOutlined,
-  PlusOutlined,
-  SendOutlined,
-  ReloadOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '../contexts/AuthContext'
 import type { MenuProps } from 'antd'
